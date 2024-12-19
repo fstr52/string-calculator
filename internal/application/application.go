@@ -175,13 +175,16 @@ func (a *Application) CalcHandler(w http.ResponseWriter, r *http.Request) {
 func (a *Application) RunServer() error {
 	app := New()
 	logger := app.logger.logger
-	logger.Info("Trying to start server")
+	logger.Info("Trying to start server",
+		slog.String("port", a.config.Addr),
+	)
+
 	http.HandleFunc("/api/v1/calculate", app.LoggingHandler(app.CalcHandler))
 	err := http.ListenAndServe(":"+a.config.Addr, nil)
 	if err != nil {
 		logger.Error("Failed to start server", slog.Any("error", err))
 		return err
 	}
-	logger.Info("Server started succesfully")
+
 	return nil
 }
