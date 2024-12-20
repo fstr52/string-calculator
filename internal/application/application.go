@@ -7,6 +7,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,11 +21,21 @@ type Config struct {
 	Addr string
 }
 
+// Полчение конфига из переменной окружения (в конфиге есть возможность изменять порт запуска сервера)
+// файл конфигурации (конфиг) создается в "../../config.txt", так что запуск приложения из редактора/IDE нужно выполнять СТРОГО ПО ПУТИ C://User/.../calc/cmd/app (прописано в README)
 func ConfigFromEnv() *Config {
-	config.GetConfig("../../config.txt")
+	rootDir := GetProjectRoot()
+	configPath := filepath.Join(rootDir, "config.txt")
+	config.GetConfig(configPath)
 	config := new(Config)
 	config.Addr = os.Getenv("PORT")
 	return config
+}
+
+// Получение корневой папки проекта
+func GetProjectRoot() string {
+	_, b, _, _ := runtime.Caller(0)
+	return filepath.Join(filepath.Dir(b), "../..")
 }
 
 type Logger struct {
@@ -30,8 +43,11 @@ type Logger struct {
 	logFile *os.File
 }
 
+// Открытие/создание файла для хранения логов
 func OpenLogger() *Logger {
-	file, err := os.OpenFile("../../log.txt", os.O_WRONLY|os.O_CREATE, 0644)
+	rootDir := GetProjectRoot()
+	loggerPath := filepath.Join(rootDir, "log.txt")
+	file, err := os.OpenFile(loggerPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -50,6 +66,7 @@ type Application struct {
 	logger *Logger
 }
 
+// Создание нового application-а с использованием config и logger
 func New() *Application {
 	return &Application{
 		config: ConfigFromEnv(),
@@ -57,6 +74,7 @@ func New() *Application {
 	}
 }
 
+// Запуск приложения в консоли/редакторе (НЕ СЕРВЕР)
 func (a *Application) Run() error {
 	logger := a.logger.logger
 	for {
@@ -97,6 +115,7 @@ type Request struct {
 	Expression string `json:"expression"`
 }
 
+// Хэндлер для логирования
 func (a *Application) LoggingHandler(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := a.logger.logger
@@ -119,11 +138,32 @@ func (a *Application) LoggingHandler(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+// Хэндлер для обработки метода запроса
+func (a *Application) RequestHandler(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		method := r.Method
+		logger := a.logger.logger
+		if method != http.MethodPost {
+			response := response{Err: "Method not allowed"}
+			responseJson, err := json.Marshal(&response)
+			if err != nil {
+				logger.Error("error encoding response with err",
+					slog.Any("error", err),
+				)
+			}
+			http.Error(w, string(responseJson), http.StatusMethodNotAllowed)
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
+}
+
 type response struct {
 	Result string `json:"result,omitempty"`
 	Err    string `json:"error,omitempty"`
 }
 
+// Хэндлер для обработки выражения и вывода ответа (СЕРВЕР)
 func (a *Application) CalcHandler(w http.ResponseWriter, r *http.Request) {
 	logger := a.logger.logger
 	response := new(response)
@@ -161,7 +201,7 @@ func (a *Application) CalcHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, string(responseJson), http.StatusInternalServerError)
 		}
 	} else {
-		response.Result = fmt.Sprint(result)
+		response.Result = strconv.FormatFloat(result, 'f', -1, 64)
 		responseJson, err := json.Marshal(&response)
 		if err != nil {
 			logger.Error("error encoding response with err",
@@ -172,6 +212,7 @@ func (a *Application) CalcHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Запуск сервера
 func (a *Application) RunServer() error {
 	app := New()
 	logger := app.logger.logger
@@ -179,7 +220,7 @@ func (a *Application) RunServer() error {
 		slog.String("port", a.config.Addr),
 	)
 
-	http.HandleFunc("/api/v1/calculate", app.LoggingHandler(app.CalcHandler))
+	http.HandleFunc("/api/v1/calculate", app.RequestHandler(app.LoggingHandler(app.CalcHandler)))
 	err := http.ListenAndServe(":"+a.config.Addr, nil)
 	if err != nil {
 		logger.Error("Failed to start server", slog.Any("error", err))
