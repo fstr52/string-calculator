@@ -146,6 +146,13 @@ func (a *Application) RequestHandler(next http.HandlerFunc) http.HandlerFunc {
 		if method != http.MethodPost {
 			response := response{Err: "Method not allowed"}
 			responseJson, err := json.Marshal(&response)
+			logger.Info("new request with bad method",
+				slog.Group("request info",
+					slog.String("url", r.URL.String()),
+					slog.Any("header", r.Header),
+					slog.String("method", r.Method),
+				),
+			)
 			if err != nil {
 				logger.Error("error encoding response with err",
 					slog.Any("error", err),
@@ -155,6 +162,13 @@ func (a *Application) RequestHandler(next http.HandlerFunc) http.HandlerFunc {
 		} else if r.Header.Get("Content-Type") != "application/json" {
 			response := response{Err: "Expression is not valid. Expected JSON format input"}
 			responseJson, err := json.Marshal(&response)
+			logger.Info("new request with bad Content-Type",
+				slog.Group("request info",
+					slog.String("url", r.URL.String()),
+					slog.Any("header", r.Header),
+					slog.String("method", r.Method),
+				),
+			)
 			if err != nil {
 				logger.Error("error encoding response with err",
 					slog.Any("error", err),
