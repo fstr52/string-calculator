@@ -152,6 +152,15 @@ func (a *Application) RequestHandler(next http.HandlerFunc) http.HandlerFunc {
 				)
 			}
 			http.Error(w, string(responseJson), http.StatusMethodNotAllowed)
+		} else if r.Header.Get("Content-Type") != "application/json" {
+			response := response{Err: "Expression is not valid. Expected JSON format input"}
+			responseJson, err := json.Marshal(&response)
+			if err != nil {
+				logger.Error("error encoding response with err",
+					slog.Any("error", err),
+				)
+			}
+			http.Error(w, string(responseJson), http.StatusBadRequest)
 		} else {
 			next.ServeHTTP(w, r)
 		}
