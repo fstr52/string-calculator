@@ -100,11 +100,11 @@ func Calculate(input string) (float64, error) {
 		return 0, err
 	}
 
-	tokens := strings.Fields(toCalc)
+	values := strings.Fields(toCalc)
 	stack := make([]float64, 0)
 
-	for _, token := range tokens {
-		switch token {
+	for _, value := range values {
+		switch value {
 		case "+", "-", "*", "/":
 			if len(stack) < 2 {
 				return 0, ErrInvalidExpression
@@ -115,7 +115,7 @@ func Calculate(input string) (float64, error) {
 			stack = stack[:len(stack)-2]
 
 			var result float64
-			switch token {
+			switch value {
 			case "+":
 				result = a + b
 			case "-":
@@ -130,7 +130,7 @@ func Calculate(input string) (float64, error) {
 			}
 			stack = append(stack, result)
 		default:
-			num, err := strconv.ParseFloat(token, 64)
+			num, err := strconv.ParseFloat(value, 64)
 			if err != nil {
 				return 0, ErrInvalidExpression
 			}
