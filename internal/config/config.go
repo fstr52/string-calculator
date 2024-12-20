@@ -10,6 +10,7 @@ type Config struct {
 	Addr string `json:"addr"`
 }
 
+// Получение данных из файла конфигурации или создание файла и запись в него стоковых значений ("PORT": 8080)
 func GetConfig(filePath string) {
 	var config Config
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
