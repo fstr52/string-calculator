@@ -1,7 +1,6 @@
 package calculation
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 	"unicode"
@@ -16,6 +15,7 @@ var priors = map[string]int{
 	"/": 1,
 }
 
+// Запись полученной на вводе строки в обратную польскую нотацию
 func toPolandNotation(expression string) (string, error) {
 	resultString := ""
 	operStack := ""
@@ -26,8 +26,19 @@ func toPolandNotation(expression string) (string, error) {
 	for i := 0; i < len(expression); i++ {
 		char := expression[i]
 
+		if char == '-' && (i == 0 || expression[i-1] == '(') {
+			if i < len(expression)-1 && (unicode.IsDigit(rune(expression[i+1])) || expression[i+1] == '.') {
+				currentNumber = "-"
+			} else {
+				resultString += "0 "
+				operStack = string(char) + operStack
+			}
+			continue
+		}
+
 		if unicode.IsDigit(rune(char)) || char == '.' {
 			currentNumber += string(char)
+
 			if i == len(expression)-1 || (!unicode.IsDigit(rune(expression[i+1])) && expression[i+1] != '.') {
 				resultString += currentNumber + " "
 				currentNumber = ""
@@ -76,7 +87,10 @@ func toPolandNotation(expression string) (string, error) {
 	return strings.TrimSpace(resultString), nil
 }
 
+// Проведение операций в вводной строке, записанной в форме обратной польской нотации (рассчет)
 func Calculate(input string) (float64, error) {
+	var signCount int
+
 	if len(input) == 0 {
 		return 0, ErrInvalidExpression
 	}
@@ -95,6 +109,7 @@ func Calculate(input string) (float64, error) {
 			if len(stack) < 2 {
 				return 0, ErrInvalidExpression
 			}
+			signCount++
 			b := stack[len(stack)-1]
 			a := stack[len(stack)-2]
 			stack = stack[:len(stack)-2]
@@ -117,7 +132,7 @@ func Calculate(input string) (float64, error) {
 		default:
 			num, err := strconv.ParseFloat(token, 64)
 			if err != nil {
-				return 0, errors.New("некорректное число: " + token) // ErrInvalidExpression?
+				return 0, ErrInvalidExpression
 			}
 			stack = append(stack, num)
 		}
