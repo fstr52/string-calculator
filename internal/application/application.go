@@ -22,14 +22,13 @@ type Config struct {
 }
 
 // Полчение конфига из переменной окружения (в конфиге есть возможность изменять порт запуска сервера)
-// файл конфигурации (конфиг) создается в "../../config.txt", так что запуск приложения из редактора/IDE нужно выполнять СТРОГО ПО ПУТИ C://User/.../calc/cmd/app (прописано в README)
 func ConfigFromEnv() *Config {
+	curConfig := new(Config)
 	rootDir := GetProjectRoot()
-	configPath := filepath.Join(rootDir, "config.txt")
+	configPath := filepath.Join(rootDir, "config.json")
 	config.GetConfig(configPath)
-	config := new(Config)
-	config.Addr = os.Getenv("PORT")
-	return config
+	curConfig.Addr = os.Getenv("PORT")
+	return curConfig
 }
 
 // Получение корневой папки проекта
@@ -138,7 +137,7 @@ func (a *Application) LoggingHandler(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-// Хэндлер для обработки метода запроса
+// Хэндлер для обработки метода запроса (единственный разрешенный метод запроса: POST)
 func (a *Application) RequestHandler(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		method := r.Method
@@ -186,7 +185,7 @@ type response struct {
 	Err    string `json:"error,omitempty"`
 }
 
-// Хэндлер для обработки выражения и вывода ответа (СЕРВЕР)
+// Хэндлер для обработки выражения и вывода ответа
 func (a *Application) CalcHandler(w http.ResponseWriter, r *http.Request) {
 	logger := a.logger.logger
 	response := new(response)
