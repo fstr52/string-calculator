@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	Addr string `json:"addr"`
+	Addr string `json:"port"`
 }
 
 // Получение данных из файла конфигурации или создание файла и запись в него стоковых значений ("PORT": 8080)
