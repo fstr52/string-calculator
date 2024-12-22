@@ -23,6 +23,10 @@
     ```console
     go run ./cmd/app
     ```
+    Или скомпилируйте файл командой и запустите полученный исполняемый файл:
+    ```console
+    go build ./cmd/app/main.go
+    ```
 6. Сервис доступен по адресу: `localhost:8080/api/v1/calculate`
 
 
