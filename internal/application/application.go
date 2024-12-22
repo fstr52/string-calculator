@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fstr52/calculator/internal/config"
-	"github.com/fstr52/calculator/pkg/calculation"
+	"github.com/fstr52/string-calculator/internal/config"
+	"github.com/fstr52/string-calculator/pkg/calculation"
 )
 
 type Config struct {
@@ -194,10 +194,21 @@ func (a *Application) CalcHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		logger.Error("request body decode error",
-			slog.Any("error", err),
+		response.Err = "Expression is not valid. Ivalind JSON"
+		responseJson, err := json.Marshal(&response)
+		logger.Info("new request with bad method",
+			slog.Group("request info",
+				slog.String("url", r.URL.String()),
+				slog.Any("header", r.Header),
+				slog.String("method", r.Method),
+			),
 		)
+		if err != nil {
+			logger.Error("error encoding response with err",
+				slog.Any("error", err),
+			)
+		}
+		http.Error(w, string(responseJson), http.StatusUnprocessableEntity)
 		return
 	}
 
