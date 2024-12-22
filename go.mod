@@ -1,3 +1,3 @@
-module github.com/fstr52/calculator
+module github.com/fstr52/string-calculator
 
 go 1.22.4
