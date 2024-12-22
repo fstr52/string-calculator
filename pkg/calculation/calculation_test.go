@@ -3,7 +3,7 @@ package calculation_test
 import (
 	"testing"
 
-	"github.com/fstr52/calculator/pkg/calculation"
+	"github.com/fstr52/string-calculator/pkg/calculation"
 )
 
 func TestCalc(t *testing.T) {
