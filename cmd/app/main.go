@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/fstr52/calculator/internal/application"
+	"github.com/fstr52/string-calculator/internal/application"
 )
 
 func main() {
