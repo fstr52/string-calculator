@@ -6,17 +6,19 @@
 
 ## О проекте
 
-Веб-сервис для вычисления арифметических выражений через HTTP-запрос с методом POST
+Данный проект представляет собой простой веб-сервис для вычисления арифметических выражений.
 
 ## Запуск
 
 1. Установите [Go](https://go.dev/doc/install)
-2. Установите [Git](https://git-scm.com/downloads)
+2. Установите [Git](https://git-scm.com/downloads) (при использовании далее способа с клонированием через git clone)
 3. Склонируйте проект через команду:
     ```console
     git clone https://github.com/fstr52/string-calculator
     ```
-4. Перейдите в дирректорию проекта
+
+    Или просто скачайте ZIP-архив проекта (зеленая кнопка Code над файлами проекта, затем Download ZIP)
+4. Перейдите в директорию проекта
 5. Запустите приложение через команду:
     ```console
     go run ./cmd/app
@@ -30,8 +32,25 @@
 
 ## Примеры использования 
 
-```shell
+Curl запрос:
+```bash
 curl --location "localhost:8080/api/v1/calculate" --header "Content-Type: application/json" --data "{\"expression\": \"12*(1+2*(1+2)+3)+1\"}"
+```
+
+Тело запроса (для простоты визуализации и понимания):
+```json
+{
+    "expression": "12*(1+2*(1+2)+3)+1"
+}
+```
+
+Ответ:
+```json
+{"result":"121"}
+```
+HTTP статус:
+```
+200 OK
 ```
 
 ## Все возможные результаты запросов
@@ -41,50 +60,70 @@ curl --location "localhost:8080/api/v1/calculate" --header "Content-Type: applic
 *Ниже приведены curl-запросы, но рекомендую использовать [Postman](https://www.postman.com/downloads/) для удобства*
 
 Запрос: 
-```shell
+```bash
 curl --location "localhost:8080/api/v1/calculate" --header "Content-Type: application/json" --data "{\"expression\": \"2+3\"}"
 ```
 Ответ:
-```shell
+```json
 {"result":"5"}
+```
+HTTP статус:
+```
 200 OK
 ```
 
-### Ошибка и response status code
+### Ошибка и HTTP status code
 1. **Неверное выражение** <br>
     Запрос: 
-    ```shell
+    ```bash
     curl --location "localhost:8080/api/v1/calculate" --header "Content-Type: application/json" --data "{\"expression\": \"(2+3\"}"
     ```
     Ответ:
-    ```shell
+    ```json
     {"error":"Expression is not valid"}
+    ```
+    HTTP статус:
+    ```
     422 Unprocessable Entity
     ```
 2. **Неверный формат ввода**<br>
     Запрос: 
-    ```shell
+    ```bash
     curl --location "localhost:8080/api/v1/calculate" --header "Content-Type: text/plain" --data "{\"expression\": \"2+3\"}"
     ```
     Ответ:
-    ```shell
+    ```json
     {"error":"Expression is not valid. Expected JSON format input"}
+    ```
+    HTTP статус:
+    ```
     400 Bad Request
     ```
 3. **Неверный метод запроса**<br>
     Запрос: 
-    ```shell
+    ```bash
     curl --location --request GET  "localhost:8080/api/v1/calculate"  --header "Content-Type: application/json"  --data "{\"expression\": \"2+3\"}"
     ```
     Ответ:
-    ```shell
+    ```json
     {"error":"Method not allowed"}
+    ```
+    HTTP статус:
+    ```
     405 Method Not Allowed
     ```
 4. **Непредвиденная ошибка**<br>
     Ответ:
-    ```shell
+    ```json
     {"error":"Internal server error"}
+    ```
+    HTTP статус:
+    ```
     500 Internal server error
     ```
 
+## Примечание
+
+- Поддерживаются стандартные арифметические операции
+- Поддерживаются только POST запросы
+- Поддерживается использование унарного минуса, но не плюса
